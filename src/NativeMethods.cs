@@ -36,6 +36,22 @@ namespace FontAutoInstaller
         [DllImport("dwmapi.dll")]
         static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 
+        [DllImport("shell32.dll")]
+        static extern int SHQueryUserNotificationState(out int state);
+
+        // False while a fullscreen game, video, presentation or Focus / Do Not Disturb is on.
+        // Same check Windows uses for its own notifications.
+        public static bool UserAcceptsPopups()
+        {
+            try
+            {
+                int state;
+                if (SHQueryUserNotificationState(out state) != 0) return true;
+                return state == 5 /* QUNS_ACCEPTS_NOTIFICATIONS */ || state == 7 /* QUNS_APP */;
+            }
+            catch (Exception) { return true; }
+        }
+
         // Sharp text on high-resolution screens.
         public static void EnableDpiAwareness()
         {

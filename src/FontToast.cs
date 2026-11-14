@@ -70,7 +70,8 @@ namespace FontAutoInstaller
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.Manual;
             ShowInTaskbar = false;
-            TopMost = true;
+            // No "TopMost = true" here: that property activates the window and steals focus.
+            // Always-on-top is set through CreateParams instead.
             BackColor = colors.Back;
             KeyPreview = true;
             KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Escape) Close(); };
@@ -141,9 +142,24 @@ namespace FontAutoInstaller
             get
             {
                 CreateParams cp = base.CreateParams;
-                cp.ExStyle |= 0x00000080; // WS_EX_TOOLWINDOW: no taskbar button, no Alt+Tab entry
+                cp.ExStyle |= 0x00000080  // WS_EX_TOOLWINDOW: no taskbar button, no Alt+Tab entry
+                            | 0x00000008; // WS_EX_TOPMOST: stays above other apps
+                if (autoClose)
+                    cp.ExStyle |= 0x08000000; // WS_EX_NOACTIVATE: never takes focus, even when clicked
                 return cp;
             }
+        }
+
+        // Clicking the popup (copy a name, press X) must not pull focus from your app either.
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_MOUSEACTIVATE = 0x0021, MA_NOACTIVATE = 3;
+            if (autoClose && m.Msg == WM_MOUSEACTIVATE)
+            {
+                m.Result = (IntPtr)MA_NOACTIVATE;
+                return;
+            }
+            base.WndProc(ref m);
         }
 
         protected override void OnHandleCreated(EventArgs e)

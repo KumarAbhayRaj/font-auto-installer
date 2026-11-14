@@ -117,6 +117,11 @@ namespace FontAutoInstaller
         // One card on screen at a time; a new one replaces the old.
         void ShowCard(string title, string subtitle, IList<FontEntry> entries, bool autoClose)
         {
+            if (autoClose && !NativeMethods.UserAcceptsPopups())
+            {
+                Log.Write("Popup skipped: fullscreen app, game or Do Not Disturb is on. See Recently installed fonts.");
+                return;
+            }
             ui.Post(delegate
             {
                 try

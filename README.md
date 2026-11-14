@@ -51,7 +51,8 @@ Downloaded something random and forgot its name? A card pops up near the clock l
 
 - **Click a name to copy it**, then paste it into Illustrator, Figma or Word's font box.
 - Fades out after 5 seconds. Hover to keep it open, or close it with ✕.
-- Never steals focus from what you're working on.
+- **Never steals focus.** It floats on top but you keep typing, selecting or playing in your app, even if you click the popup.
+- **Stays quiet during fullscreen games, videos, presentations and Do Not Disturb.** The fonts still install and show up in your history.
 - Follows your Windows light or dark mode.
 
 **Missed it?** Left-click the tray icon (or pick **Recently installed fonts** from its menu) to see your last 50 installed fonts, newest first, with the date and what was installed. Click any name to copy it.

@@ -76,7 +76,13 @@ namespace FontAutoInstaller
             catch (Exception ex) { Log.Write("Catch-up scan failed: " + ex.Message); }
         }
 
-        void OnEvent(object sender, FileSystemEventArgs e) { Touch(e.FullPath); }
+        void OnEvent(object sender, FileSystemEventArgs e)
+        {
+            // A freshly created/renamed item is new, even if an identical file was handled here before.
+            if (e.ChangeType != WatcherChangeTypes.Changed)
+                lock (gate) done.Remove(e.FullPath);
+            Touch(e.FullPath);
+        }
 
         void OnError(object sender, ErrorEventArgs e)
         {
