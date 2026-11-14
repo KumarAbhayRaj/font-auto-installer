@@ -3,6 +3,7 @@ app/
 *.exe
 log.txt
 log.txt.old
+history.txt
 work/
 
 # Secrets (none today, kept as a safety net)

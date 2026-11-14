@@ -15,7 +15,7 @@ namespace FontAutoInstaller
         public static readonly string UserFontDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Microsoft\Windows\Fonts");
 
-        // Full names of every font already installed (system wide and for this user).
+        // Normalized full names of every font already installed (system wide and for this user).
         public static HashSet<string> InstalledNames()
         {
             var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -35,46 +35,51 @@ namespace FontAutoInstaller
                     int paren = n.LastIndexOf(" (", StringComparison.Ordinal);
                     if (paren > 0) n = n.Substring(0, paren); // drop " (TrueType)"
                     foreach (string part in n.Split(new[] { " & " }, StringSplitOptions.RemoveEmptyEntries))
-                        names.Add(part.Trim());
+                        names.Add(FontInfo.Normalize(part));
                 }
             }
         }
 
-        public static InstallResult Install(FontInfo font, HashSet<string> installed)
+        // dest: where the font file now lives (null when it was already registered under another file).
+        public static InstallResult Install(FontInfo font, HashSet<string> installed, out string dest)
         {
-            if (installed.Contains(font.FullName)) return InstallResult.AlreadyInstalled;
+            dest = null;
+            if (installed.Contains(font.NameKey)) return InstallResult.AlreadyInstalled;
 
-            string dest = null;
+            bool copied = false;
             try
             {
                 Directory.CreateDirectory(UserFontDir);
-                dest = FreeDestination(font.FilePath);
-                if (dest == null) return InstallResult.AlreadyInstalled;
+                bool sameFileThere;
+                dest = FreeDestination(font.FilePath, out sameFileThere);
+                if (sameFileThere) return InstallResult.AlreadyInstalled;
 
                 File.Copy(font.FilePath, dest);
+                copied = true;
                 using (RegistryKey key = Registry.CurrentUser.CreateSubKey(FontsKey))
                     key.SetValue(font.FullName + (font.IsOtf ? " (OpenType)" : " (TrueType)"), dest);
                 NativeMethods.AddFontResource(dest);
 
-                installed.Add(font.FullName);
+                installed.Add(font.NameKey);
                 return InstallResult.Installed;
             }
             catch (Exception ex)
             {
                 Log.Write("  Install failed for " + font.FullName + ": " + ex.Message);
-                if (dest != null) { try { File.Delete(dest); } catch (Exception) { } }
+                if (copied) { try { File.Delete(dest); } catch (Exception) { } }
+                dest = null;
                 return InstallResult.Failed;
             }
         }
 
         // Same file name already there: identical size means same font; otherwise pick "name_2.ttf".
-        static string FreeDestination(string source)
+        static string FreeDestination(string source, out bool sameFileThere)
         {
             string name = Path.GetFileNameWithoutExtension(source);
             string ext = Path.GetExtension(source);
             string target = Path.Combine(UserFontDir, name + ext);
-            if (!File.Exists(target)) return target;
-            if (new FileInfo(target).Length == new FileInfo(source).Length) return null;
+            sameFileThere = File.Exists(target) && new FileInfo(target).Length == new FileInfo(source).Length;
+            if (!File.Exists(target) || sameFileThere) return target;
 
             for (int i = 2; ; i++)
             {

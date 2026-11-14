@@ -27,6 +27,7 @@ namespace FontAutoInstaller
                         using (signal) signal.Set();
                     return 0;
                 }
+                NativeMethods.EnableDpiAwareness();
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new TrayApp(args.Contains("--startup")));

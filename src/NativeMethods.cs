@@ -30,6 +30,31 @@ namespace FontAutoInstaller
         [DllImport("kernel32.dll")]
         static extern bool AttachConsole(int processId);
 
+        [DllImport("user32.dll")]
+        static extern bool SetProcessDPIAware();
+
+        [DllImport("dwmapi.dll")]
+        static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+        // Sharp text on high-resolution screens.
+        public static void EnableDpiAwareness()
+        {
+            try { SetProcessDPIAware(); } catch (Exception) { }
+        }
+
+        // Windows 11 rounded corners and a thin border color. Ignored on older Windows.
+        public static void StyleWindow(IntPtr hwnd, System.Drawing.Color border)
+        {
+            try
+            {
+                int round = 2; // DWMWCP_ROUND
+                DwmSetWindowAttribute(hwnd, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, ref round, sizeof(int));
+                int colorRef = border.R | (border.G << 8) | (border.B << 16);
+                DwmSetWindowAttribute(hwnd, 34 /* DWMWA_BORDER_COLOR */, ref colorRef, sizeof(int));
+            }
+            catch (Exception) { }
+        }
+
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         struct SHFILEOPSTRUCT
         {

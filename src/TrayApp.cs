@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -28,6 +29,7 @@ namespace FontAutoInstaller
         readonly Icon pausedIcon = TrayIcon.Draw(Color.FromArgb(107, 114, 128));
         readonly ToolStripMenuItem pauseItem;
         readonly ToolStripMenuItem startupItem;
+        FontToast card;
 
         public TrayApp(bool launchedAtStartup)
         {
@@ -43,6 +45,8 @@ namespace FontAutoInstaller
             var menu = new ContextMenuStrip();
             menu.Items.Add(new ToolStripMenuItem("Watching " + downloads) { Enabled = false });
             menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(new ToolStripMenuItem("Recently installed fonts", null, delegate { ShowHistory(); })
+                { Font = new Font(menu.Font, FontStyle.Bold) });
             menu.Items.Add(pauseItem);
             menu.Items.Add("Open log", null, delegate { OpenPath(Log.FilePath); });
             menu.Items.Add("Open installed fonts folder", null, delegate { OpenPath(FontInstaller.UserFontDir); });
@@ -51,6 +55,7 @@ namespace FontAutoInstaller
             menu.Items.Add("Quit", null, delegate { Quit(); });
 
             tray = new NotifyIcon { Icon = activeIcon, Text = "Font Auto Installer", ContextMenuStrip = menu, Visible = true };
+            tray.MouseClick += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Left) ShowHistory(); };
 
             ApplyStartupSetting();
 
@@ -78,7 +83,7 @@ namespace FontAutoInstaller
                 try
                 {
                     JobReport report = FontJob.Run(path, false);
-                    if (report.Found > 0) Notify(report.Title, report.Body);
+                    if (report.Found > 0) ShowCard(report.Title, report.Subtitle, report.Entries(), true);
                 }
                 catch (Exception ex)
                 {
@@ -98,8 +103,31 @@ namespace FontAutoInstaller
 
         void Notify(string title, string body)
         {
-            if (body.Length > 250) body = body.Substring(0, 247) + "...";
-            ui.Post(delegate { tray.ShowBalloonTip(5000, title, body, ToolTipIcon.Info); }, null);
+            ShowCard(title, body, new FontEntry[0], true);
+        }
+
+        void ShowHistory()
+        {
+            List<FontEntry> recent = InstallHistory.Recent(50);
+            ShowCard("Recently installed fonts",
+                recent.Count == 0 ? "Nothing yet. Download a font and it shows up here." : "Newest first. Click a name to copy it.",
+                recent, false);
+        }
+
+        // One card on screen at a time; a new one replaces the old.
+        void ShowCard(string title, string subtitle, IList<FontEntry> entries, bool autoClose)
+        {
+            ui.Post(delegate
+            {
+                try
+                {
+                    if (card != null && !card.IsDisposed) card.Close();
+                    card = new FontToast(title, subtitle, entries, autoClose);
+                    card.Show();
+                    if (!autoClose) card.Activate();
+                }
+                catch (Exception ex) { Log.Write("Popup failed: " + ex); }
+            }, null);
         }
 
         void TogglePause()

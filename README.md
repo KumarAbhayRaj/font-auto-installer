@@ -33,7 +33,7 @@ Font packs usually ship the same font several times. For every font family the a
 
 1. **Variable wins.** If the pack has a variable version (detected from the font's own data, or `Variable` / `[wght]` in the file name), only the variable files are installed. One variable file covers every weight. Upright and italic are judged separately, so a pack with an upright-only variable file still gets its static italics.
 2. **OTF over TTF.** If the same font comes as both OTF and TTF, the OTF is installed.
-3. **No duplicates.** The same font sitting in two subfolders is installed once.
+3. **No duplicates.** The same font sitting in two subfolders is installed once, even when the foundry named the OTF and TTF differently (`Bloka-BlackItalic` vs `Bloka Black Italic`).
 4. **No overwrites.** A font that's already installed on your PC is skipped. Nothing that Illustrator, Figma or Word is using gets replaced.
 5. **Junk skipped.** `__MACOSX` folders, `._` files and web fonts (`WOFF`, `WOFF2`, `EOT`) are ignored.
 
@@ -43,12 +43,18 @@ After installing, the download goes to the **Recycle Bin** (never deleted for go
 
 If the download also holds anything else, like a `.psd`, `.ai`, mockup or template, the fonts are still installed but the download **stays in Downloads** untouched.
 
-### It tells you
+### It tells you what you got
 
-A small popup near the clock:
+Downloaded something random and forgot its name? A card pops up near the clock listing every font family that was installed, **each name drawn in its own typeface**.
 
-> **Installed 4 fonts**
-> Inter, Inter Display. Skipped 2 already installed. Download moved to Recycle Bin.
+<img src="docs/popup.png" width="360" alt="Popup listing installed fonts, each name shown in its own font">
+
+- **Click a name to copy it**, then paste it into Illustrator, Figma or Word's font box.
+- Fades out after 5 seconds. Hover to keep it open, or close it with ✕.
+- Never steals focus from what you're working on.
+- Follows your Windows light or dark mode.
+
+**Missed it?** Left-click the tray icon (or pick **Recently installed fonts** from its menu) to see your last 50 installed fonts, newest first, with the date and what was installed. Click any name to copy it.
 
 ### It's light on battery
 
@@ -70,10 +76,11 @@ It starts by itself every time you log in.
 
 ## Tray menu
 
-Right-click the **Aa** icon:
+Left-click the **Aa** icon to see recently installed fonts. Right-click it for the menu:
 
 | Item | Does |
 |---|---|
+| Recently installed fonts | Your font history, click a name to copy it. |
 | Pause watching | Stops installing until you resume. Icon turns grey. |
 | Open log | Text file listing every font installed or skipped. |
 | Open installed fonts folder | Where your fonts were copied. |
@@ -100,7 +107,7 @@ Read the code. It's short. Here is exactly what the app can and can't do.
 |---|---|
 | `Downloads` (top level) | Watches for new downloads. Reads them. Moves fully installed font downloads to the Recycle Bin. |
 | `%LOCALAPPDATA%\Microsoft\Windows\Fonts` | Where Windows keeps per-user fonts. Installed fonts are copied here. |
-| The exe's folder (or `%LOCALAPPDATA%\FontAutoInstaller` if that's read-only) | `log.txt` and a temporary `work` folder used while unzipping. Cleaned after each download. |
+| The exe's folder (or `%LOCALAPPDATA%\FontAutoInstaller` if that's read-only) | `log.txt`, `history.txt` (names of fonts it installed) and a temporary `work` folder used while unzipping. Cleaned after each download. |
 
 **Registry entries it writes (all under your user, `HKEY_CURRENT_USER`):**
 
@@ -124,7 +131,7 @@ Read the code. It's short. Here is exactly what the app can and can't do.
 ## Uninstall
 
 1. Right-click the **Aa** icon, untick **Start with Windows**, then **Quit**.
-2. Delete `FontAutoInstaller.exe` and its `log.txt`.
+2. Delete `FontAutoInstaller.exe` and its `log.txt` and `history.txt`.
 
 Fonts it installed stay installed. Remove them from **Settings > Personalization > Fonts** if you want.
 
@@ -145,12 +152,13 @@ Output: `app\FontAutoInstaller.exe`.
 | File | Job |
 |---|---|
 | `src/Program.cs` | Entry point, one-copy-only check, `--scan` mode, app folders. |
-| `src/TrayApp.cs` | Tray icon, menu, popups, auto-start. |
+| `src/TrayApp.cs` | Tray icon, menu, auto-start. |
+| `src/FontToast.cs` | The popup card: font names in their own typeface, click to copy, 5 s fade. |
 | `src/DownloadWatcher.cs` | Waits until a download is truly finished (no change for 3 s, file unlocked). Ignores `.crdownload` / `.part` temp files. |
 | `src/PackageScanner.cs` | Opens folders and archives, finds fonts, decides if the download is safe to recycle. |
 | `src/FontInfo.cs` | Reads font names straight from the file, spots variable fonts, applies the pick rules. |
 | `src/FontInstaller.cs` | Per-user install and duplicate check. |
-| `src/FontJob.cs` | One download from start to finish, popup text, dry run report. |
+| `src/FontJob.cs` | One download from start to finish, popup rows, install history, dry run report. |
 | `src/NativeMethods.cs` | Windows calls (font refresh, Recycle Bin, Efficiency mode), safe file walking, log. |
 
 ## Requirements

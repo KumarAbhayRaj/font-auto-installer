@@ -14,10 +14,18 @@ namespace FontAutoInstaller
         public readonly string FilePath;
         public readonly string Family;
         public readonly string FullName;
+        public readonly string Style;
         public readonly bool IsOtf;
         public readonly bool IsVariable;
         public readonly bool IsItalic;
         public readonly string FamilyKey;
+        public readonly string NameKey; // "Bloka-BlackItalic" and "Bloka Black Italic" both become "blokablackitalic"
+
+        // Letters and digits only, lowercase. Foundries name the OTF and TTF of one font inconsistently.
+        public static string Normalize(string name)
+        {
+            return new string((name ?? "").ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
+        }
 
         static readonly Regex ItalicWord = new Regex(@"italic|oblique", RegexOptions.IgnoreCase);
 
@@ -27,6 +35,7 @@ namespace FontAutoInstaller
 
         FontInfo(string path, string family, string fullName, string style, bool hasTypoFamily, bool hasFvar)
         {
+            Style = style;
             IsItalic = ItalicWord.IsMatch(style) || ItalicWord.IsMatch(Path.GetFileNameWithoutExtension(path));
             FilePath = path;
             Family = family;
@@ -41,7 +50,8 @@ namespace FontAutoInstaller
             // Without a typographic family name (ID 16), name ID 1 can be "Inter Bold"; strip style words.
             string key = hasTypoFamily ? Regex.Replace(family, @"\b(variable|vf)\b", "", RegexOptions.IgnoreCase)
                                        : StyleWords.Replace(family, "");
-            FamilyKey = new string(key.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
+            FamilyKey = Normalize(key);
+            NameKey = Normalize(fullName);
         }
 
         public static FontInfo TryRead(string path)
@@ -138,7 +148,7 @@ namespace FontAutoInstaller
                 List<FontInfo> pool = family.Where(f => f.IsVariable).ToList();
                 if (pool.Count == 0) pool = family.ToList();
 
-                foreach (var sameFont in pool.GroupBy(f => f.FullName, StringComparer.OrdinalIgnoreCase))
+                foreach (var sameFont in pool.GroupBy(f => f.NameKey))
                     chosen.Add(sameFont.FirstOrDefault(f => f.IsOtf) ?? sameFont.First());
             }
             return chosen;
