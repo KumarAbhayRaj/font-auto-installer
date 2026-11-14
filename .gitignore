@@ -1,0 +1,12 @@
+# Build output and runtime files (the exe ships as a GitHub Release, not in the repo)
+app/
+*.exe
+log.txt
+log.txt.old
+work/
+
+# Secrets (none today, kept as a safety net)
+.env
+*.env
+*.key
+*.pem
