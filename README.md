@@ -143,24 +143,28 @@ No tools to install. It compiles with the C# compiler that's already inside Wind
 ```
 git clone https://github.com/KumarAbhayRaj/font-auto-installer.git
 cd font-auto-installer
-powershell -ExecutionPolicy Bypass -File build.ps1
+powershell -ExecutionPolicy Bypass -File windows\build.ps1
 ```
 
-Output: `app\FontAutoInstaller.exe`.
+Output: `windows\app\FontAutoInstaller.exe`.
 
 ## Code map
 
 | File | Job |
 |---|---|
-| `src/Program.cs` | Entry point, one-copy-only check, `--scan` mode, app folders. |
-| `src/TrayApp.cs` | Tray icon, menu, auto-start. |
-| `src/FontToast.cs` | The popup card: font names in their own typeface, click to copy, 5 s fade. |
-| `src/DownloadWatcher.cs` | Waits until a download is truly finished (no change for 3 s, file unlocked). Ignores `.crdownload` / `.part` temp files. |
-| `src/PackageScanner.cs` | Opens folders and archives, finds fonts, decides if the download is safe to recycle. |
-| `src/FontInfo.cs` | Reads font names straight from the file, spots variable fonts, applies the pick rules. |
-| `src/FontInstaller.cs` | Per-user install and duplicate check. |
-| `src/FontJob.cs` | One download from start to finish, popup rows, install history, dry run report. |
-| `src/NativeMethods.cs` | Windows calls (font refresh, Recycle Bin, Efficiency mode), safe file walking, log. |
+| `windows/src/Program.cs` | Entry point, one-copy-only check, `--scan` mode, app folders. |
+| `windows/src/TrayApp.cs` | Tray icon, menu, auto-start. |
+| `windows/src/FontToast.cs` | The popup card: font names in their own typeface, click to copy, 5 s fade. |
+| `windows/src/DownloadWatcher.cs` | Waits until a download is truly finished (no change for 3 s, file unlocked). Ignores `.crdownload` / `.part` temp files. |
+| `windows/src/PackageScanner.cs` | Opens folders and archives, finds fonts, decides if the download is safe to recycle. |
+| `windows/src/FontInfo.cs` | Reads font names straight from the file, spots variable fonts, applies the pick rules. |
+| `windows/src/FontInstaller.cs` | Per-user install and duplicate check. |
+| `windows/src/FontJob.cs` | One download from start to finish, popup rows, install history, dry run report. |
+| `windows/src/NativeMethods.cs` | Windows calls (font refresh, Recycle Bin, Efficiency mode), safe file walking, log. |
+
+## Mac version
+
+In progress. Plan: [docs/MAC_PLAN.md](docs/MAC_PLAN.md). Code will live in `mac/`.
 
 ## Requirements
 
