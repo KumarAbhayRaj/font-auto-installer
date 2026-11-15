@@ -11,3 +11,6 @@ work/
 *.env
 *.key
 *.pem
+
+# Personal launch notes
+marketing/
